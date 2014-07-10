@@ -61,121 +61,6 @@ local function VM(codedata, startaddress, datasize, trace)
     local fp = 0
     local ip = startaddress or 1
 
-    local opcodes = {
-        [IADD] = function()
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = a + b
-        end,
-        [ISUB] = function()
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = a - b
-        end,
-        [IMUL] = function()
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = a * b
-        end,
-        [ILT] = function()
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = (a < b and 1 or 0)
-        end,
-        [IEQ] = function()
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = (a == b and 1 or 0)
-        end,
-        [BR] = function()
-            ip = code[ip]
-        end,
-        [BRT] = function()
-            local addr = code[ip]
-            ip = ip + 1
-            if stack[sp] == 1 then
-                ip = addr
-            end
-            sp = sp - 1
-        end,
-        [BRF] = function()
-            local addr = code[ip]
-            ip = ip + 1
-            if stack[sp] == 0 then
-                ip = addr
-            end
-            sp = sp - 1
-        end,
-        [ICONST] = function()
-            sp = sp + 1
-            stack[sp] = code[ip]
-            ip = ip + 1
-        end,
-        [LOAD] = function()
-            local offset = code[ip]
-            ip = ip + 1
-            sp = sp + 1
-            stack[sp] = stack[fp+offset]
-        end,
-        [GLOAD] = function()
-            sp = sp + 1
-            stack[sp] = global[code[ip]]
-            ip = ip + 1
-        end,
-        [STORE] = function()
-            local offset = code[ip]
-            ip = ip + 1
-            stack[fp+offset] = stack[sp]
-            sp = sp - 1
-        end,
-        [GSTORE] = function()
-            global[code[ip]] = stack[sp]
-            ip = ip + 1
-            sp = sp - 1
-        end,
-        [PRINT] = function()
-            print("stdout:", stack[sp])
-            sp = sp - 1
-        end,
-        [POP] = function()
-            sp = sp - 1
-        end,
-        [HALT] = function()
-            return true
-        end,
-        [CALL] = function()
-            local addr = code[ip]
-            ip = ip + 1
-            local nargs = code[ip]
-            ip = ip + 1
-            sp = sp + 1
-            stack[sp] = nargs
-            sp = sp + 1
-            stack[sp] = fp
-            sp = sp + 1
-            stack[sp] = ip
-            fp = sp
-            ip = addr
-        end,
-        [RET] = function()
-            local rval = stack[sp]
-            sp = sp - 1
-            sp = fp
-            ip = stack[sp]
-            sp = sp - 1
-            fp = stack[sp]
-            sp = sp - 1
-            local nargs = stack[sp]
-            sp = sp - nargs
-            stack[sp] = rval
-        end
-    }
-
     local function operands(t, j)
         local opcount = noperand[t[j]] or datasize
         local result = "["
@@ -203,7 +88,118 @@ local function VM(codedata, startaddress, datasize, trace)
         while ip <= #code and not halt do
             if trace then disassemble() end
             ip = ip + 1
-            halt, err = opcodes[opcode]()
+                    if opcode == IADD then
+            local b = stack[sp]
+            sp = sp - 1
+            local a = stack[sp]
+            stack[sp] = a + b
+        end
+        if opcode == ISUB then
+            local b = stack[sp]
+            sp = sp - 1
+            local a = stack[sp]
+            stack[sp] = a - b
+        end
+        if opcode == IMUL then
+            local b = stack[sp]
+            sp = sp - 1
+            local a = stack[sp]
+            stack[sp] = a * b
+        end
+        if opcode == ILT then
+            local b = stack[sp]
+            sp = sp - 1
+            local a = stack[sp]
+            stack[sp] = (a < b and 1 or 0)
+        end
+        if opcode == IEQ then
+            local b = stack[sp]
+            sp = sp - 1
+            local a = stack[sp]
+            stack[sp] = (a == b and 1 or 0)
+        end
+        if opcode == BR then
+            ip = code[ip]
+        end
+        if opcode == BRT then
+            local addr = code[ip]
+            ip = ip + 1
+            if stack[sp] == 1 then
+                ip = addr
+            end
+            sp = sp - 1
+        end
+        if opcode == BRF then
+            local addr = code[ip]
+            ip = ip + 1
+            if stack[sp] == 0 then
+                ip = addr
+            end
+            sp = sp - 1
+        end
+        if opcode == ICONST then
+            sp = sp + 1
+            stack[sp] = code[ip]
+            ip = ip + 1
+        end
+        if opcode == LOAD then
+            local offset = code[ip]
+            ip = ip + 1
+            sp = sp + 1
+            stack[sp] = stack[fp+offset]
+        end
+        if opcode == GLOAD then
+            sp = sp + 1
+            stack[sp] = global[code[ip]]
+            ip = ip + 1
+        end
+        if opcode == STORE then
+            local offset = code[ip]
+            ip = ip + 1
+            stack[fp+offset] = stack[sp]
+            sp = sp - 1
+        end
+        if opcode == GSTORE then
+            global[code[ip]] = stack[sp]
+            ip = ip + 1
+            sp = sp - 1
+        end
+        if opcode == PRINT then
+            print("stdout:", stack[sp])
+            sp = sp - 1
+        end
+        if opcode == POP then
+            sp = sp - 1
+        end
+        if opcode == HALT then
+            halt = true
+        end
+        if opcode == CALL then
+            local addr = code[ip]
+            ip = ip + 1
+            local nargs = code[ip]
+            ip = ip + 1
+            sp = sp + 1
+            stack[sp] = nargs
+            sp = sp + 1
+            stack[sp] = fp
+            sp = sp + 1
+            stack[sp] = ip
+            fp = sp
+            ip = addr
+        end
+        if opcode == RET then
+            local rval = stack[sp]
+            sp = sp - 1
+            sp = fp
+            ip = stack[sp]
+            sp = sp - 1
+            fp = stack[sp]
+            sp = sp - 1
+            local nargs = stack[sp]
+            sp = sp - nargs
+            stack[sp] = rval
+        end
             opcode = code[ip]
         end
         if halt == "error" then
