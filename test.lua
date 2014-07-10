@@ -86,29 +86,29 @@ local loop_factorial = {
     IMUL,
     RET,
 
-    ICONST, 10, --23
-    GSTORE, 0,  --25
-    ICONST, 0,  --27
-    GSTORE, 1,  --29
+    ICONST, 10,
+    GSTORE, 0,
+    ICONST, 0,
+    GSTORE, 1,
 
-    GLOAD, 1,   --31
-    GLOAD, 0,   --33
-    ILT,        --34
-    BRF, 55,    --35
-    GLOAD, 1,   --37
-    ICONST, 1,  --39
-    IADD,       --40
-    GSTORE, 1,  --42
+    GLOAD, 1,
+    GLOAD, 0,
+    ILT,
+    BRF, 55,
+    GLOAD, 1,
+    ICONST, 1,
+    IADD,
+    GSTORE, 1,
 
-    --call fact
-    ICONST, 12, --44
-    CALL, 1, 1, --46
-    PRINT, -- 49
+    --print(fact(12))
+    ICONST, 12,
+    CALL, 1, 1,
+    PRINT,
 
-    BR, 31, --50
-    GLOAD, 1, --52
+    BR, 31,
+    GLOAD, 1,
 
-    HALT --54
+    HALT
 }
 
 local vm = VM(hello, 1, 0, "trace")
