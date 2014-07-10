@@ -21,6 +21,14 @@ local HALT = 16
 local CALL = 17
 local RET  = 18
 
+local hello = {
+    ICONST, 10,
+    ICONST, 9,
+    IADD,
+    PRINT,
+    HALT
+}
+
 local loop = {
     ICONST, 10,
     GSTORE, 0,
@@ -103,8 +111,10 @@ local loop_factorial = {
     HALT --54
 }
 
+local vm = VM(hello, 1, 0, "trace")
+vm.execute()
 
-local vm = VM(loop, 1, 2)
+vm = VM(loop, 1, 2)
 vm.execute()
 
 vm = VM(factorial, 23, 0)
