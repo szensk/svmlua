@@ -20,7 +20,7 @@ local POP  = 15
 local HALT = 16
 local CALL = 17
 local RET  = 18
---[[
+
 local loop = {
     ICONST, 10,
     GSTORE, 0,
@@ -61,7 +61,7 @@ local factorial = {
     PRINT,
     HALT
 }
-]]--
+
 local loop_factorial = {
     LOAD, -3,
     ICONST, 2,
@@ -78,7 +78,7 @@ local loop_factorial = {
     IMUL,
     RET,
 
-    ICONST, 10000, --23
+    ICONST, 10, --23
     GSTORE, 0,  --25
     ICONST, 0,  --27
     GSTORE, 1,  --29
@@ -95,7 +95,7 @@ local loop_factorial = {
     --call fact
     ICONST, 12, --44
     CALL, 1, 1, --46
-    POP, -- 49
+    PRINT, -- 49
 
     BR, 31, --50
     GLOAD, 1, --52
@@ -103,13 +103,12 @@ local loop_factorial = {
     HALT --54
 }
 
---[[
+
 local vm = VM(loop, 1, 2)
 vm.execute()
 
 vm = VM(factorial, 23, 0)
 vm.execute()
-]]--
 
-local vm = VM(loop_factorial, 23, 2)
+vm = VM(loop_factorial, 23, 2)
 vm.execute()
