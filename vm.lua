@@ -76,7 +76,7 @@ local function VM(codedata, startaddress, datasize, trace)
         end
         return table.concat(res, ",")
     end
-    local function disassemble()
+    local function printtrace()
         print(("%04d: %6s %11s Stack: %s"):format(ip, mnemonics[code[ip]], operands(code, ip), dumpstack()))
         --print(("Data %s"):format(operands(global, -1)))
     end
@@ -86,120 +86,103 @@ local function VM(codedata, startaddress, datasize, trace)
         local halt = nil
         local err = nil
         while ip <= #code and not halt do
-            if trace then disassemble() end
+            if trace then printtrace() end
             ip = ip + 1
-                    if opcode == IADD then
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = a + b
-        end
-        if opcode == ISUB then
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = a - b
-        end
-        if opcode == IMUL then
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = a * b
-        end
-        if opcode == ILT then
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = (a < b and 1 or 0)
-        end
-        if opcode == IEQ then
-            local b = stack[sp]
-            sp = sp - 1
-            local a = stack[sp]
-            stack[sp] = (a == b and 1 or 0)
-        end
-        if opcode == BR then
-            ip = code[ip]
-        end
-        if opcode == BRT then
-            local addr = code[ip]
-            ip = ip + 1
-            if stack[sp] == 1 then
+            if opcode == IADD then
+                local b = stack[sp]
+                sp = sp - 1
+                local a = stack[sp]
+                stack[sp] = a + b
+            elseif opcode == ISUB then
+                local b = stack[sp]
+                sp = sp - 1
+                local a = stack[sp]
+                stack[sp] = a - b
+            elseif opcode == IMUL then
+                local b = stack[sp]
+                sp = sp - 1
+                local a = stack[sp]
+                stack[sp] = a * b
+            elseif opcode == ILT then
+                local b = stack[sp]
+                sp = sp - 1
+                local a = stack[sp]
+                stack[sp] = (a < b and 1 or 0)
+            elseif opcode == IEQ then
+                local b = stack[sp]
+                sp = sp - 1
+                local a = stack[sp]
+                stack[sp] = (a == b and 1 or 0)
+            elseif opcode == BR then
+                ip = code[ip]
+            elseif opcode == BRT then
+                local addr = code[ip]
+                ip = ip + 1
+                if stack[sp] == 1 then
+                    ip = addr
+                end
+                sp = sp - 1
+            elseif opcode == BRF then
+                local addr = code[ip]
+                ip = ip + 1
+                if stack[sp] == 0 then
+                    ip = addr
+                end
+                sp = sp - 1
+            elseif opcode == ICONST then
+                sp = sp + 1
+                stack[sp] = code[ip]
+                ip = ip + 1
+            elseif opcode == LOAD then
+                local offset = code[ip]
+                ip = ip + 1
+                sp = sp + 1
+                stack[sp] = stack[fp+offset]
+            elseif opcode == GLOAD then
+                sp = sp + 1
+                stack[sp] = global[code[ip]]
+                ip = ip + 1
+            elseif opcode == STORE then
+                local offset = code[ip]
+                ip = ip + 1
+                stack[fp+offset] = stack[sp]
+                sp = sp - 1
+            elseif opcode == GSTORE then
+                global[code[ip]] = stack[sp]
+                ip = ip + 1
+                sp = sp - 1
+            elseif opcode == PRINT then
+                print("stdout:", stack[sp])
+                sp = sp - 1
+            elseif opcode == POP then
+                sp = sp - 1
+            elseif opcode == HALT then
+                halt = true
+            elseif opcode == CALL then
+                local addr = code[ip]
+                ip = ip + 1
+                local nargs = code[ip]
+                ip = ip + 1
+                sp = sp + 1
+                stack[sp] = nargs
+                sp = sp + 1
+                stack[sp] = fp
+                sp = sp + 1
+                stack[sp] = ip
+                fp = sp
                 ip = addr
+            elseif opcode == RET then
+                local rval = stack[sp]
+                sp = sp - 1
+                sp = fp
+                ip = stack[sp]
+                sp = sp - 1
+                fp = stack[sp]
+                sp = sp - 1
+                local nargs = stack[sp]
+                sp = sp - nargs
+                stack[sp] = rval
             end
-            sp = sp - 1
-        end
-        if opcode == BRF then
-            local addr = code[ip]
-            ip = ip + 1
-            if stack[sp] == 0 then
-                ip = addr
-            end
-            sp = sp - 1
-        end
-        if opcode == ICONST then
-            sp = sp + 1
-            stack[sp] = code[ip]
-            ip = ip + 1
-        end
-        if opcode == LOAD then
-            local offset = code[ip]
-            ip = ip + 1
-            sp = sp + 1
-            stack[sp] = stack[fp+offset]
-        end
-        if opcode == GLOAD then
-            sp = sp + 1
-            stack[sp] = global[code[ip]]
-            ip = ip + 1
-        end
-        if opcode == STORE then
-            local offset = code[ip]
-            ip = ip + 1
-            stack[fp+offset] = stack[sp]
-            sp = sp - 1
-        end
-        if opcode == GSTORE then
-            global[code[ip]] = stack[sp]
-            ip = ip + 1
-            sp = sp - 1
-        end
-        if opcode == PRINT then
-            print("stdout:", stack[sp])
-            sp = sp - 1
-        end
-        if opcode == POP then
-            sp = sp - 1
-        end
-        if opcode == HALT then
-            halt = true
-        end
-        if opcode == CALL then
-            local addr = code[ip]
-            ip = ip + 1
-            local nargs = code[ip]
-            ip = ip + 1
-            sp = sp + 1
-            stack[sp] = nargs
-            sp = sp + 1
-            stack[sp] = fp
-            sp = sp + 1
-            stack[sp] = ip
-            fp = sp
-            ip = addr
-        end
-        if opcode == RET then
-            local rval = stack[sp]
-            sp = sp - 1
-            sp = fp
-            ip = stack[sp]
-            sp = sp - 1
-            fp = stack[sp]
-            sp = sp - 1
-            local nargs = stack[sp]
-            sp = sp - nargs
-            stack[sp] = rval
-        end
             opcode = code[ip]
         end
         if halt == "error" then
