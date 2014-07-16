@@ -152,7 +152,7 @@ local function VM(codedata, startaddress, datasize, trace)
                 ip = ip + 1
                 sp = sp - 1
             elseif opcode == PRINT then
-                print("stdout:", stack[sp])
+                print(stack[sp])
                 sp = sp - 1
             elseif opcode == POP then
                 sp = sp - 1
