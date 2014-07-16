@@ -19,12 +19,20 @@ local POP  = 15
 local HALT = 16
 local CALL = 17
 local RET  = 18
+local ICONSTR = 19
+local LOAD2   = 20
+local GLOAD2  = 21
+local ILTBRF  = 22
+local IKADD   = 23
+local IKSUB   = 24
+local IKCALL = 25
 
 -- reverse look up
 local mnemonics = {
     "iadd", "isub", "imul", "ilt", "ieq", "br", "brt", "brf",
     "iconst", "load", "gload", "store", "gstore", "print", "pop",
-    "halt", "call", "ret"
+    "halt", "call", "ret", "ikgstr", "load2", "gload2", "iltbrf",
+    "ikadd", "iksub", "ikcall"
 }
 
 -- # of operands
@@ -47,6 +55,13 @@ local noperand = {
     [HALT]  = 0,
     [CALL]  = 2,
     [RET]   = 0,
+    [ICONSTR] = 2,
+    [LOAD2] = 2,
+    [GLOAD2] = 2,
+    [ILTBRF] = 1,
+    [IKADD] = 1,
+    [IKSUB] = 1,
+    [IKCALL] = 3
 }
 
 local function VM(codedata, startaddress, datasize, trace)
@@ -138,7 +153,23 @@ local function VM(codedata, startaddress, datasize, trace)
                 ip = ip + 1
                 sp = sp + 1
                 stack[sp] = stack[fp+offset]
+            elseif opcode == LOAD2 then
+                local offset = code[ip]
+                ip = ip + 1
+                sp = sp + 1
+                stack[sp] = stack[fp+offset]
+                offset = code[ip]
+                ip = ip + 1
+                sp = sp + 1
+                stack[sp] = stack[fp+offset]
             elseif opcode == GLOAD then
+                sp = sp + 1
+                stack[sp] = global[code[ip]]
+                ip = ip + 1
+            elseif opcode == GLOAD2 then
+                sp = sp + 1
+                stack[sp] = global[code[ip]]
+                ip = ip + 1
                 sp = sp + 1
                 stack[sp] = global[code[ip]]
                 ip = ip + 1
@@ -182,6 +213,49 @@ local function VM(codedata, startaddress, datasize, trace)
                 local nargs = stack[sp]
                 sp = sp - nargs
                 stack[sp] = rval
+            elseif opcode == ICONSTR then
+                local const = code[ip]
+                ip = ip + 1
+                global[code[ip]] = const
+                ip = ip + 1
+            elseif opcode == ILTBRF then
+                local b = stack[sp]
+                sp = sp - 1
+                local a = stack[sp]
+                local addr = code[ip]
+                ip = ip + 1
+                if not (a < b) then
+                    ip = addr
+                end
+            elseif opcode == IKADD then
+                --sp = sp + 1
+                local b = code[ip]
+                ip = ip + 1
+                local a = stack[sp]
+                sp = sp - 1
+                stack[sp] = a + b
+            elseif opcode == IKSUB then
+                local b = code[ip]
+                ip = ip + 1
+                local a = stack[sp]
+                sp = sp - 1
+                stack[sp] = a - b
+            elseif opcode == IKCALL then
+                sp = sp + 1
+                stack[sp] = code[ip]
+                ip = ip + 1
+                local addr = code[ip]
+                ip = ip + 1
+                local nargs = code[ip]
+                ip = ip + 1
+                sp = sp + 1
+                stack[sp] = nargs
+                sp = sp + 1
+                stack[sp] = fp
+                sp = sp + 1
+                stack[sp] = ip
+                fp = sp
+                ip = addr
             end
             opcode = code[ip]
         end

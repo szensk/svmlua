@@ -20,47 +20,51 @@ local POP  = 15
 local HALT = 16
 local CALL = 17
 local RET  = 18
+local IKGSTR = 19
+local LOAD2  = 20
+local GLOAD2 = 21
+local ILTBRF = 22
+local IKADD  = 23
+local IKSUB  = 24
+local IKCALL = 25
 
+local loops = 1000000
 local loop_factorial = {
     LOAD, -3,
     ICONST, 2,
-    ILT,
-    BRF, 11,
+    ILTBRF, 10,
     ICONST, 1,
     RET,
 
-    LOAD, -3,
-    LOAD, -3,
-    ICONST, 1,
-    ISUB,
+    LOAD2, -3, -3,
+    IKSUB, 1,
     CALL, 1, 1,
     IMUL,
     RET,
 
-    ICONST, 1000000, --23
-    GSTORE, 0,  --25
-    ICONST, 0,  --27
-    GSTORE, 1,  --29
+    --loop start
+    IKGSTR, loops, 0, --23
+    IKGSTR, 0, 1,  --27
 
-    GLOAD, 1,   --31
-    GLOAD, 0,   --33
-    ILT,        --34
-    BRF, 55,    --35
+    GLOAD2, 1, 0,   --31  --33
+    ILTBRF, 46,       --34
     GLOAD, 1,   --37
-    ICONST, 1,  --39
-    IADD,       --40
+    IKADD, 1,  --39       --40
     GSTORE, 1,  --42
 
     --call fact
-    ICONST, 12, --44
-    CALL, 1, 1, --46
-    POP, -- 49
+    IKCALL, 12, 1, 1, --46
+    POP,
 
-    BR, 31, --50
-    GLOAD, 1, --52
+    --jump to gload2
+    BR, 26,
+    GLOAD, 1,
 
-    HALT --54
+    --bail
+    HALT
 }
 
-local vm = VM(loop_factorial, 23, 2)
+print(#loop_factorial * 4, 'bytes')
+local vm = VM(loop_factorial, 20, 2)
+--vm.disassemble()
 vm.execute()

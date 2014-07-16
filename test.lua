@@ -121,4 +121,5 @@ vm = VM(factorial, 23, 0)
 vm.execute()
 
 vm = VM(loop_factorial, 23, 2)
+vm.disassemble()
 vm.execute()
